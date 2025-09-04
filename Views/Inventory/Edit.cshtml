@@ -1,0 +1,293 @@
+﻿@using InventoryManagement.Web.ViewModels
+@using InventoryManagement.Web.Data.Models
+@using InventoryManagement.Web.DTOs
+@model CreateInventoryViewModel
+
+@{
+    ViewData["Title"] = "Edit Inventory";
+}
+
+<h1 class="mb-4">
+    @Model.InventoryDTO.Title
+    <span id="save-status" class="badge bg-secondary ms-2"></span>
+</h1>
+
+<form id="inventory-edit-form" asp-controller="Inventory" asp-action="Edit" asp-route-id="@Model.InventoryDTO.Id" method="post" data-inventory-id="@Model.InventoryDTO.Id" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="InventoryDTO.Id" />
+    <input type="hidden" asp-for="InventoryDTO.Version" />
+    @Html.AntiForgeryToken()
+
+    <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">General Settings</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="custom-id-tab" data-bs-toggle="tab" data-bs-target="#custom-id" type="button" role="tab">Custom ID</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="fields-tab" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab">Fields</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="access-tab" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">Access</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="inventoryTabsContent">
+        <div class="tab-pane fade show active" id="general" role="tabpanel" tabindex="0">
+            <div class="form-group mb-3">
+                <label asp-for="InventoryDTO.Title" class="form-label"></label>
+                <input asp-for="InventoryDTO.Title" class="form-control" />
+                <span asp-validation-for="InventoryDTO.Title" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="InventoryDTO.Description" class="form-label"></label>
+                <textarea asp-for="InventoryDTO.Description" class="form-control"></textarea>
+                <span asp-validation-for="InventoryDTO.Description" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="InventoryDTO.CategoryId" class="form-label">Category</label>
+                <select asp-for="InventoryDTO.CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))" class="form-control">
+                    <option value="">-- Select a Category --</option>
+                </select>
+                <span asp-validation-for="InventoryDTO.CategoryId" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="InventoryDTO.ImageUrl" class="form-label">Image URL</label>
+                <input asp-for="InventoryDTO.ImageUrl" class="form-control" />
+                <span asp-validation-for="InventoryDTO.ImageUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check mb-3">
+                <input asp-for="InventoryDTO.IsPublic" class="form-check-input" />
+                <label asp-for="InventoryDTO.IsPublic" class="form-check-label">Is Public</label>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="InventoryDTO.TagsInput" class="form-label">Tags (comma-separated)</label>
+                <input asp-for="InventoryDTO.TagsInput" class="form-control" value="@(string.Join(", ", Model.InventoryDTO.Tags))" />
+                <span asp-validation-for="InventoryDTO.TagsInput" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="custom-id" role="tabpanel" tabindex="0">
+            <div class="card p-3">
+                <p>You can set up inventory numbers in your preferred format. To create a format, add new elements, edit them, drag to reorder, or drag elements out of the form to delete them.</p>
+                <div class="alert alert-secondary d-flex align-items-center" role="alert">
+                    <span>Example:</span>
+                    <span id="custom-id-preview" class="ms-2 fw-bold">...</span>
+                </div>
+                <div id="custom-id-elements-container" class="mb-3">
+                </div>
+                <button type="button" id="add-id-element-btn" class="btn btn-secondary">Add element</button>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="fields" role="tabpanel" tabindex="0">
+            <h3 class="mt-4 mb-3">Custom Fields</h3>
+            <div id="custom-fields-container" class="mb-3">
+            </div>
+            <button type="button" id="add-field-btn" class="btn btn-secondary mb-4">Add Custom Field</button>
+        </div>
+
+        <div class="tab-pane fade" id="access" role="tabpanel" tabindex="0">
+            <div class="card p-3">
+                <h3>Manage Access</h3>
+                <p>Choose which users have write access to this inventory. Admins always have full access.</p>
+
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="user-search-input" placeholder="Search for users by name or email">
+                    <button class="btn btn-primary" type="button" id="add-user-btn">Add User</button>
+                </div>
+
+                <table class="table" id="access-users-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @* Users with access will be dynamically added here *@
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary me-2">Save Changes</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+        const form = document.getElementById('inventory-edit-form');
+        const saveStatus = document.getElementById('save-status');
+        const addFieldBtn = document.getElementById('add-field-btn');
+        const customFieldsContainer = document.getElementById('custom-fields-container');
+        let fieldCounter = 0;
+
+        // Dynamic fields management logic
+        @if (Model.InventoryDTO.FieldDefinitions != null)
+        {
+            @:var existingFields = @Html.Raw(Json.Serialize(Model.InventoryDTO.FieldDefinitions));
+            @:existingFields.forEach(field => addField(field));
+        }
+        addFieldBtn.addEventListener('click', () => addField());
+        function addField(field = {}) {
+            const fieldId = field.Id || null;
+            const fieldIndex = fieldCounter++;
+            const fieldType = field.Type || 'String';
+            const fieldHtml = `
+                <div class="custom-field p-3 border rounded mb-3" data-index="${fieldIndex}">
+                    <input type="hidden" name="InventoryDTO.FieldDefinitions[${fieldIndex}].Id" value="${fieldId || ''}" />
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="m-0">Custom Field</h5>
+                        <button type="button" class="btn-close remove-field-btn" aria-label="Remove"></button>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label>Title</label>
+                        <input type="text" name="InventoryDTO.FieldDefinitions[${fieldIndex}].Title" class="form-control" value="${field.Title || ''}" required />
+                    </div>
+                    <div class="form-group mb-2">
+                        <label>Type</label>
+                        <select name="InventoryDTO.FieldDefinitions[${fieldIndex}].Type" class="form-control field-type-select">
+                            <option value="String" ${fieldType === 'String' ? 'selected' : ''}>String</option>
+                            <option value="Int" ${fieldType === 'Int' ? 'selected' : ''}>Int</option>
+                            <option value="Bool" ${fieldType === 'Bool' ? 'selected' : ''}>Bool</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-check mb-2">
+                        <input type="checkbox" name="InventoryDTO.FieldDefinitions[${fieldIndex}].IsRequired" class="form-check-input" ${field.IsRequired ? 'checked' : ''} />
+                        <label class="form-check-label">Is Required</label>
+                    </div>
+                    <div class="form-group form-check mb-2">
+                        <input type="checkbox" name="InventoryDTO.FieldDefinitions[${fieldIndex}].ShowInTable" class="form-check-input" ${field.ShowInTable ? 'checked' : ''} />
+                        <label class="form-check-label">Show in Table</label>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label>Description</label>
+                        <input type="text" name="InventoryDTO.FieldDefinitions[${fieldIndex}].Description" class="form-control" value="${field.Description || ''}" />
+                    </div>
+                    <div class="form-group validation-fields mb-2" data-field-type="${fieldType}">
+                        <div class="string-validation" style="${fieldType === 'String' ? '' : 'display:none;'}">
+                            <label>Validation Regex</label>
+                            <input type="text" name="InventoryDTO.FieldDefinitions[${fieldIndex}].ValidationRegex" class="form-control" value="${field.ValidationRegex || ''}" />
+                        </div>
+                        <div class="int-validation" style="${fieldType === 'Int' ? '' : 'display:none;'}">
+                            <label>Validation Min</label>
+                            <input type="number" name="InventoryDTO.FieldDefinitions[${fieldIndex}].ValidationMin" class="form-control mb-2" value="${field.ValidationMin || ''}" />
+                            <label>Validation Max</label>
+                            <input type="number" name="InventoryDTO.FieldDefinitions[${fieldIndex}].ValidationMax" class="form-control" value="${field.ValidationMax || ''}" />
+                        </div>
+                    </div>
+                </div>
+            `;
+            customFieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+        }
+
+        const addIdElementBtn = document.getElementById('add-id-element-btn');
+        const idElementsContainer = document.getElementById('custom-id-elements-container');
+        const idPreview = document.getElementById('custom-id-preview');
+        let idElementCounter = 0;
+
+        function updateIdPreview() {
+            let previewText = '';
+            idElementsContainer.querySelectorAll('.id-element-item').forEach(item => {
+                const type = item.querySelector('.element-type-select').value;
+                const value = item.querySelector('input[name*="Value"]').value || '';
+                const format = item.querySelector('input[name*="Format"]').value || '';
+
+                switch(type) {
+                    case 'FixedText':
+                        previewText += value;
+                        break;
+                    case 'Random':
+                        previewText += format ? `[Random:${format}]` : '[Random]';
+                        break;
+                    case 'Sequence':
+                        previewText += format ? `[Seq:${format}]` : '[Seq]';
+                        break;
+                    case 'DateTime':
+                        previewText += format ? `[Date:${format}]` : '[Date]';
+                        break;
+                    case 'Guid':
+                        previewText += '[GUID]';
+                        break;
+                }
+            });
+            idPreview.textContent = previewText || '...';
+        }
+
+        function addIdElement(element = {}) {
+            const index = idElementCounter++;
+            const type = element.Type || 'FixedText';
+            const valuePlaceholder = {
+                'FixedText': 'e.g., "ID-"',
+                'Random': 'e.g., D6 (6-digit) or X5 (5-digit hex)',
+                'Sequence': 'e.g., D3 (3-digit sequence)',
+                'DateTime': 'e.g., yyyyMMdd',
+                'Guid': ''
+            }[type];
+            const html = `
+                <div class="id-element-item p-3 border rounded mb-2 d-flex align-items-center" data-index="${index}">
+                    <i class="fas fa-grip-lines me-2 handle"></i>
+                    <select name="InventoryDTO.CustomIdFormat[${index}].Type" class="form-control me-2 element-type-select">
+                        <option value="FixedText" ${type === 'FixedText' ? 'selected' : ''}>Fixed Text</option>
+                        <option value="Random" ${type === 'Random' ? 'selected' : ''}>Random</option>
+                        <option value="Sequence" ${type === 'Sequence' ? 'selected' : ''}>Sequence</option>
+                        <option value="DateTime" ${type === 'DateTime' ? 'selected' : ''}>Date/time</option>
+                        <option value="Guid" ${type === 'Guid' ? 'selected' : ''}>GUID</option>
+                    </select>
+                    <input type="text" name="InventoryDTO.CustomIdFormat[${index}].Value" class="form-control me-2" placeholder="${valuePlaceholder}" value="${element.Value || ''}" />
+                    <input type="text" name="InventoryDTO.CustomIdFormat[${index}].Format" class="form-control me-2" placeholder="Format" value="${element.Format || ''}" />
+                    <button type="button" class="btn btn-danger btn-sm remove-element">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            idElementsContainer.insertAdjacentHTML('beforeend', html);
+            updateIdPreview();
+        }
+
+        @if (!string.IsNullOrEmpty(Model.InventoryDTO.CustomIdFormat))
+        {
+            @:try {
+            @:var formatModel = JSON.parse('@Html.Raw(Model.InventoryDTO.CustomIdFormat)');
+            @:if (formatModel && formatModel.Elements) {
+            @:formatModel.Elements.forEach(element => addIdElement(element));
+            @:}
+            @:} catch (e) { console.error('Failed to parse CustomIdFormat JSON:', e); }
+        }
+
+        addIdElementBtn.addEventListener('click', () => addIdElement());
+        idElementsContainer.addEventListener('input', () => updateIdPreview());
+        idElementsContainer.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-element')) {
+                e.target.closest('.id-element-item').remove();
+                updateIdPreview();
+            }
+        });
+
+        form.addEventListener('submit', function(e) {
+            const fieldElements = document.querySelectorAll('.custom-field');
+            fieldElements.forEach((field, index) => {
+                field.querySelectorAll('input, select').forEach(input => {
+                    const originalName = input.name;
+                    if (originalName) {
+                        input.name = originalName.replace(/\[\d+\]/, `[${index}]`);
+                    }
+                });
+            });
+            const idElements = document.querySelectorAll('.id-element-item');
+            idElements.forEach((element, index) => {
+                element.querySelectorAll('input, select').forEach(input => {
+                    const originalName = input.name;
+                    if (originalName) {
+                        input.name = originalName.replace(/\[\d+\]/, `[${index}]`);
+                    }
+                });
+            });
+        });
+    </script>
+}

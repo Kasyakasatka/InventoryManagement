@@ -1,0 +1,108 @@
+﻿@model InventoryManagement.Web.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h1 class="mb-4">Admin Dashboard</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Admin</th>
+            <th>Locked Out</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model.Users)
+        {
+            <tr>
+                <td>@user.Username</td>
+                <td>@user.Email</td>
+                <td>
+                    @if (user.IsAdmin)
+                    {
+                        <span class="badge bg-success">Yes</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">No</span>
+                    }
+                </td>
+                <td>
+                    @if (user.IsLockedOut)
+                    {
+                        <span class="badge bg-danger">Yes</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">No</span>
+                    }
+                </td>
+                <td>
+                    <div class="actions-container">
+                        <i class="fas fa-ellipsis-v action-button"></i>
+                        <div class="context-menu">
+                            @if (!user.IsAdmin)
+                            {
+                                <form asp-controller="Admin" asp-action="AddAdmin" method="post" style="display:inline;">
+                                    <input type="hidden" name="UserId" value="@user.Id" />
+                                    <button type="submit" class="context-action btn btn-link">Add Admin</button>
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            }
+                            @if (user.IsAdmin)
+                            {
+                                <form asp-controller="Admin" asp-action="RemoveAdmin" method="post" style="display:inline;">
+                                    <input type="hidden" name="UserId" value="@user.Id" />
+                                    <button type="submit" class="context-action btn btn-link">Remove Admin</button>
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            }
+                            <form asp-controller="Admin" asp-action="DeleteUser" method="post" style="display:inline;">
+                                <input type="hidden" name="UserId" value="@user.Id" />
+                                <button type="submit" class="context-action btn btn-link text-danger">Delete</button>
+                                @Html.AntiForgeryToken()
+                            </form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .actions-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .context-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+        border-radius: 5px;
+    }
+
+    .context-action {
+        color: black;
+        padding: 8px 16px;
+        text-decoration: none;
+        display: block;
+    }
+
+    .context-menu form {
+        margin: 0;
+    }
+
+    .actions-container:hover .context-menu {
+        display: block;
+    }
+</style>

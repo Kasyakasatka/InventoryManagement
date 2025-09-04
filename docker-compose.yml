@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+           - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=postgres;Username=postgres;Password=your_db_password
+      - AdminPassword=your_admin_password
+           - AwsSettings__AccessKey=your_aws_access_key
+      - AwsSettings__SecretKey=your_aws_secret_key
+      - AwsSettings__Region=eu-central-1
+      - AwsSettings__BucketName=your_s3_bucket_name
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your_db_password
+      - POSTGRES_DB=inventory_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    
+volumes:
+  postgres_data:

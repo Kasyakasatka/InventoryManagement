@@ -92,49 +92,6 @@
                 tabTrigger.show()
             })
         })
-       
-        // var hubConnection = new signalR.HubConnectionBuilder()
-        //     .withUrl("/commentsHub")
-        //     .build();
-
-        // hubConnection.on("ReceiveComment", function(id, userName, text, createdAt) {
-        //     const commentsList = document.getElementById("comments-list");
-        //     const newCommentHtml = `
-        //         <div class="card mb-2">
-        //             <div class="card-body">
-        //                 <h5 class="card-title">${userName}</h5>
-        //                 <p class="card-text">${text}</p>
-        //                 <small class="text-muted">${createdAt}</small>
-        //             </div>
-        //         </div>
-        //     `;
-        //     commentsList.insertAdjacentHTML('afterbegin', newCommentHtml);
-        //     console.log(text);
-        // });
-        //         // Event handler for the form submission.
-        // document.getElementById("post-comment").addEventListener("click", function (event) {
-        //     event.preventDefault();
-
-        //     var user = "Dina";// document.getElementById("user-input").value;
-        //     var currentdate ="sasaasdojasijcas"; //'@DateTime.Now.ToString()';
-        //     var message = document.getElementById("comment-text").value;
-        //     var itemId = "sasasasdad"; //'@itemIteractionsModel.ItemId';
-
-        //     connection.invoke("SendComment", "gtgt", "ddd", "d", "f").catch(function (err) {
-        //         return console.error(err.toString());
-        //     });
-
-        //   //  document.getElementById("post-comment").value = ""; // Clear the message input field.
-        // });
-
-        // hubConnection.start().then(function (){
-        //     const itemId = "ttt";
-        //     // hubConnection.invoke("JoinItemDiscussion", itemId)
-        //     //     .catch(err => console.error(err.toString()));
-           
-        // }).catch(function(err) {
-        //     return console.error(err.toString());
-        // });
 
     </script>
 }

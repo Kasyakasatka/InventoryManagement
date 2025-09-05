@@ -15,8 +15,12 @@ using System.Text;
 using InventoryManagement.Web.Services.Abstractions;
 
 
-Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables()
 builder.Host.UseSerilog((context, loggerConfig) =>
     loggerConfig.ReadFrom.Configuration(context.Configuration));
 builder.Services.AddControllersWithViews();
@@ -29,6 +33,7 @@ builder.Services.AddSingleton<IAmazonS3>(sp => new AmazonS3Client(
     builder.Configuration["AwsSettings:SecretKey"],
     RegionEndpoint.GetBySystemName(builder.Configuration["AwsSettings:Region"])
 ));
+
 builder.Services.Configure<AwsSettings>(builder.Configuration.GetSection("AwsSettings"));
 builder.Services.AddScoped<ICloudStorageService, AmazonService>();
 builder.Services.ConfigureApplicationCookie(options =>
